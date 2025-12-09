@@ -14,9 +14,7 @@ function connect() {
 }
 
 function postMessage(message) {
-    if (!port) {
-        return;
-    }
+    if (!port) return;
     try {
         port.postMessage(message);
     } catch (error) {
@@ -25,17 +23,17 @@ function postMessage(message) {
 }
 
 function start() {
-    if (port && mainIntervalId) {
-        return;
-    }
-    connect();
-    let tickCounter = 0;
-    mainIntervalId = setInterval(() => {
+    if (port && mainIntervalId) return;
 
-        tickCounter++;
-        if (tickCounter >= 10) {
+    connect();
+
+    let lastTabOpenTickTimestamp = 0;
+    mainIntervalId = setInterval(() => {
+        const currentTime = Date.now();
+
+        if (currentTime - lastTabOpenTickTimestamp >= 1000) {
+            lastTabOpenTickTimestamp = currentTime;
             postMessage({ command: "tick", type: "tabOpen" });
-            tickCounter = 0;
         }
 
         const video = document.querySelector('video');
