@@ -1,38 +1,54 @@
-let port = chrome.runtime.connect({ name: "youtube-timer" });
-let portDisconnected = false;
+let port = null;
+let mainIntervalId = null;
 
-port.onDisconnect.addListener(() => {
-    portDisconnected = true;
-    if (mainIntervalId) {
-        clearInterval(mainIntervalId);
-    }
-});
+function connect() {
+    port = chrome.runtime.connect({ name: "youtube-timer" });
+    port.onDisconnect.addListener(() => {
+        port = null;
+        if (mainIntervalId) {
+            clearInterval(mainIntervalId);
+            mainIntervalId = null;
+        }
+        setTimeout(start, 1000);
+    });
+}
 
-let tickCounter = 0;
-const mainIntervalId = setInterval(() => {
-    if (portDisconnected) {
+function postMessage(message) {
+    if (!port) {
         return;
     }
-
     try {
+        port.postMessage(message);
+    } catch (error) {
+        port = null;
+    }
+}
+
+function start() {
+    if (port && mainIntervalId) {
+        return;
+    }
+    connect();
+    let tickCounter = 0;
+    mainIntervalId = setInterval(() => {
+
         tickCounter++;
         if (tickCounter >= 10) {
-            port.postMessage({ command: "tick", type: "tabOpen" });
+            postMessage({ command: "tick", type: "tabOpen" });
             tickCounter = 0;
         }
 
         const video = document.querySelector('video');
         if (video && !video.paused) {
             if (document.querySelector('.ad-showing')) {
-                port.postMessage({ command: "tick", type: "adWatch" });
+                postMessage({ command: "tick", type: "adWatch" });
             } else if (location.href.includes('/shorts/')) {
-                port.postMessage({ command: "tick", type: "shortsWatch" });
+                postMessage({ command: "tick", type: "shortsWatch" });
             } else {
-                port.postMessage({ command: "tick", type: "videoWatch" });
+                postMessage({ command: "tick", type: "videoWatch" });
             }
         }
-    } catch (error) {
-        portDisconnected = true;
-        clearInterval(mainIntervalId);
-    }
-}, 100);
+    }, 100);
+}
+
+start();
