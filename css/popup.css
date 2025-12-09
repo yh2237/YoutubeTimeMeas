@@ -1,0 +1,33 @@
+body {
+    font-family: sans-serif;
+    text-align: left;
+    width: 350px;
+    padding: 10px;
+}
+
+h1 {
+    font-size: 16px;
+    margin-top: 0;
+}
+
+#timers-container {
+    margin: 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timer-entry {
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.timer-entry span:last-child {
+    font-weight: bold;
+}
+
+.footer-info {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #666;
+}
