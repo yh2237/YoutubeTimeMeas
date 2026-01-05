@@ -15,6 +15,28 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.runtime.onConnect.addListener((port) => {
+    if (port.name === "popup") {
+        const sendMessageToActiveTab = (message) => {
+            chrome.tabs.query({ active: true, url: "*://*.youtube.com/*" }, (tabs) => {
+                if (tabs.length > 0) {
+                    chrome.tabs.sendMessage(tabs[0].id, message, () => {
+                        // エラーをキャッチするが、何もしない
+                        if (chrome.runtime.lastError) {
+                            // console.log("Could not send message to tab:", chrome.runtime.lastError.message);
+                        }
+                    });
+                }
+            });
+        };
+
+        sendMessageToActiveTab({ command: "popup_opened" });
+
+        port.onDisconnect.addListener(() => {
+            sendMessageToActiveTab({ command: "popup_closed" });
+        });
+        return;
+    }
+
     port.onMessage.addListener((request) => {
         if (request.command === "tick") {
             const currentTime = Date.now();

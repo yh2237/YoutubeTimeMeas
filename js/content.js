@@ -1,14 +1,12 @@
 let port = null;
-let mainIntervalId = null;
+let intervalId = null;
+let intervalTime = 1000;
 
 function connect() {
     port = chrome.runtime.connect({ name: "youtube-timer" });
     port.onDisconnect.addListener(() => {
         port = null;
-        if (mainIntervalId) {
-            clearInterval(mainIntervalId);
-            mainIntervalId = null;
-        }
+        stopInterval();
         setTimeout(start, 1000);
     });
 }
@@ -18,19 +16,26 @@ function postMessage(message) {
     try {
         port.postMessage(message);
     } catch (error) {
+        console.error("Failed to post message:", error);
         port = null;
     }
 }
 
-function start() {
-    if (port && mainIntervalId) return;
+function stopInterval() {
+    if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
+}
 
-    connect();
+function startInterval() {
+    stopInterval();
 
     let lastTabOpenTickTimestamp = 0;
-    mainIntervalId = setInterval(() => {
+    intervalId = setInterval(() => {
         const currentTime = Date.now();
 
+        // tabOpenのティックは常に1秒間隔で評価
         if (currentTime - lastTabOpenTickTimestamp >= 1000) {
             lastTabOpenTickTimestamp = currentTime;
             postMessage({ command: "tick", type: "tabOpen" });
@@ -46,7 +51,23 @@ function start() {
                 postMessage({ command: "tick", type: "videoWatch" });
             }
         }
-    }, 100);
+    }, intervalTime);
 }
+
+function start() {
+    if (port) return;
+    connect();
+    startInterval();
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.command === "popup_opened") {
+        intervalTime = 100;
+        startInterval();
+    } else if (request.command === "popup_closed") {
+        intervalTime = 1000;
+        startInterval();
+    }
+});
 
 start();

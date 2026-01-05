@@ -1,3 +1,4 @@
+chrome.runtime.connect({ name: "popup" });
 document.addEventListener('DOMContentLoaded', () => {
     const displays = {
         tabOpenTime: document.getElementById('tabOpenTime'),
