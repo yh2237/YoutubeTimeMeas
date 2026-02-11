@@ -21,9 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const formatDecimalTime = (totalSeconds) => {
+        totalSeconds = Math.round(totalSeconds * 10) / 10;
         const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = (totalSeconds % 60).toFixed(1);
+        const remaining = totalSeconds - hours * 3600;
+        const minutes = Math.floor(remaining / 60);
+        const seconds = (remaining - minutes * 60).toFixed(1);
         let parts = [];
         if (hours > 0) parts.push(`${hours}時間`);
         if (minutes > 0 || hours > 0) parts.push(`${minutes}分`);
